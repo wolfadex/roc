@@ -1,6 +1,11 @@
 app "breakout"
     packages { pf: "platform/main.roc" }
-    imports [pf.Game.{ Bounds, Elem, Event }, pf.Pixels.{Pixels}, pf.Quantity.{Quantity}]
+    imports [
+        pf.Game.{ Bounds, Elem, Event },
+        pf.Pixels.{Pixels},
+        pf.Quantity.{Quantity},
+        pf.Point3d.{Point3d},
+    ]
     provides [program] { Model } to pf
 
 paddleWidth = 0.2 # width of the paddle, as a % of screen width
@@ -13,6 +18,8 @@ numRows = 4
 numCols = 8
 numBlocks = numRows * numCols
 
+ScreenSpace : [ScreenSpace]
+
 Model : {
     # Screen height and width
     height : Quantity F32 Pixels,
@@ -22,6 +29,7 @@ Model : {
     # Ball coordinates
     ballX : Quantity F32 Pixels,
     ballY : Quantity F32 Pixels,
+    ballPosition : Point3d F32 Pixels ScreenSpace,
     dBallX : Quantity F32 Pixels,
     # delta x - how much it moves per tick
     dBallY : Quantity F32 Pixels,
@@ -30,6 +38,10 @@ Model : {
 
 init : Bounds -> Model
 init = \{ width, height  } ->
+    # ballPosition = Point3d.pixels
+    #                     (width |> Quantity.scaleBy 0.5 |> Pixels.inPixels)
+    #                     (height |> Quantity.scaleBy 0.4 |> Pixels.inPixels)
+    #                     0
     {
         # Screen height and width
         width,
@@ -39,6 +51,10 @@ init = \{ width, height  } ->
         # Ball coordinates
         ballX: width |> Quantity.scaleBy 0.5,
         ballY: height |> Quantity.scaleBy 0.4,
+        ballPosition: Point3d.pixels # 5.0f32 10.0f32 0.0f32,
+                        (width |> Quantity.scaleBy 0.5)
+                        (height |> Quantity.scaleBy 0.4)
+                        (Pixels.pixels 0),
         # Delta - how much ball moves in each tick
         dBallX: Pixels.pixels 4,
         dBallY: Pixels.pixels 4,

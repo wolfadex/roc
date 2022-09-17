@@ -284,6 +284,14 @@ pub struct RocRect {
     pub width: f32,
 }
 
+// #[repr(C)]
+// #[derive(Copy, Clone, Debug, Default)]
+// pub struct RocPoint3d {
+//     pub x: f32,
+//     pub y: f32,
+//     pub z: f32,
+// }
+
 impl Clone for RocElem {
     fn clone(&self) -> Self {
         unsafe {

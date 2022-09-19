@@ -5,9 +5,9 @@ interface Pixels
 
 Pixels : [Pixels]
 
-pixels : a -> Quantity a Pixels
+pixels : Frac a -> Quantity a Pixels
 pixels = \n ->
     Quantity.toQty n
 
-inPixels : Quantity a Pixels -> a 
+inPixels : Quantity a Pixels -> Frac a
 inPixels = \pix -> Quantity.fromQty pix

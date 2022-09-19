@@ -1,5 +1,6 @@
 interface Quantity
     exposes [
+        # Base operations on quantities
         Quantity,
         toQty,
         fromQty,
@@ -11,19 +12,23 @@ interface Quantity
         lessThanEqual,
         greaterThan,
         greaterThanEqual,
+        # Complex values and operations
+        Rate,
+        per,
+        for,
     ]
     imports []
 
 
-Quantity a units := a
+Quantity a units := Frac a
 
 
-fromQty : Quantity a units -> a
+fromQty : Quantity a units -> Frac a
 fromQty = \@Quantity a ->
     a
 
 
-toQty : a -> Quantity a units
+toQty : Frac a -> Quantity a units
 toQty = \a ->
     @Quantity a
 
@@ -31,12 +36,12 @@ toQty = \a ->
 # 
 # a |> Quantity.scaleBy 5 |> Quantity.fromQty == 40 == 8 * 5
 # 
-scaleBy : Quantity (Num a) units, (Num a) -> Quantity (Num a) units
+scaleBy : Quantity a units, Frac a -> Quantity a units
 scaleBy = \@Quantity a, scale ->
     @Quantity (scale * a)
 
 
-divideBy : Quantity (Frac a) units, (Frac a) -> Quantity (Frac a) units
+divideBy : Quantity a units, Frac a -> Quantity a units
 divideBy = \@Quantity a, divisor ->
     @Quantity (a / divisor)
 
@@ -45,31 +50,50 @@ divideBy = \@Quantity a, divisor ->
 # 
 # a |> Quantity.minus b |> Quantity.fromQty == 3 == 8 - 5
 # 
-minus : Quantity (Num a) units, Quantity (Num a) units -> Quantity (Num a) units
+minus : Quantity a units, Quantity a units -> Quantity a units
 minus = \@Quantity left, @Quantity right ->
     @Quantity (left - right)
 
 
-plus : Quantity (Num a) units, Quantity (Num a) units -> Quantity (Num a) units
+plus : Quantity a units, Quantity a units -> Quantity a units
 plus = \@Quantity left, @Quantity right ->
     @Quantity (left + right)
 
 
-lessThan : Quantity (Num a) units, Quantity (Num a) units -> Bool
+lessThan : Quantity a units, Quantity a units -> Bool
 lessThan = \@Quantity left, @Quantity right ->
     left < right
 
 
-lessThanEqual : Quantity (Num a) units, Quantity (Num a) units -> Bool
+lessThanEqual : Quantity a units, Quantity a units -> Bool
 lessThanEqual = \@Quantity left, @Quantity right ->
     left <= right
 
 
-greaterThan : Quantity (Num a) units, Quantity (Num a) units -> Bool
+greaterThan : Quantity a units, Quantity a units -> Bool
 greaterThan = \@Quantity left, @Quantity right ->
     left > right
 
 
-greaterThanEqual : Quantity (Num a) units, Quantity (Num a) units -> Bool
+greaterThanEqual : Quantity a units, Quantity a units -> Bool
 greaterThanEqual = \@Quantity left, @Quantity right ->
     left >= right
+
+# Rates
+
+Rate dependentUnits independentUnits : [
+    Rate dependentUnits independentUnits
+]
+
+
+# distance |> Quantity.per time
+# Like Meters/Second or Kilometers/Hour
+per : Quantity a dependentUnits, Quantity a independentUnits -> Quantity a (Rate dependentUnits independentUnits)
+per = \@Quantity dependentValue, @Quantity independentValue ->
+    @Quantity (dependentValue / independentValue)
+
+
+# hundredKilometersPerHour |> Quantity.for thirtyMinutes == fiftyKilometers
+for : Quantity a (Rate dependentUnits independentUnits), Quantity a independentUnits -> Quantity a dependentUnits
+for = \@Quantity rateOfChange, @Quantity independentValue ->
+    @Quantity (rateOfChange * independentValue)

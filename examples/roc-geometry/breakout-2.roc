@@ -2,9 +2,12 @@ app "breakout"
     packages { pf: "platform/main.roc" }
     imports [
         pf.Game.{ Bounds, Elem, Event },
+        pf.Quantity.{Quantity, Rate},
         pf.Pixels.{Pixels},
-        pf.Quantity.{Quantity},
+        pf.Angle.{Angle},
         pf.Point3d.{Point3d},
+        pf.Vector3d.{Vector3d},
+        pf.Direction3d.{Direction3d},
     ]
     provides [program] { Model } to pf
 
@@ -20,6 +23,10 @@ numBlocks = numRows * numCols
 
 ScreenSpace : [ScreenSpace]
 
+Tick : [Tick]
+
+PixelsPerTick := Rate Pixels Tick
+
 Model : {
     # Screen height and width
     height : Quantity F32 Pixels,
@@ -34,6 +41,7 @@ Model : {
     # delta x - how much it moves per tick
     dBallY : Quantity F32 Pixels,
     # delta y - how much it moves per tick
+    ballVelocity : Vector3d F32 PixelsPerTick ScreenSpace,
 }
 
 init : Bounds -> Model
@@ -58,7 +66,16 @@ init = \{ width, height  } ->
         # Delta - how much ball moves in each tick
         dBallX: Pixels.pixels 4,
         dBallY: Pixels.pixels 4,
+        # ballVelocity: Pixels.pixels 4 |> Quantity.per (ticks 1)
+        ballVelocity: Direction3d.xy (Angle.degrees 45)
+                        |> Vector3d.withLength (Pixels.pixels 4)
+                        |> Vector3d.per (ticks 1)
     }
+
+ticks : Frac a -> Quantity a Tick
+ticks = \n -> Quantity.toQty n
+
+carl : Quantity F32 PixelsPerTick
 
 update : Model, Event -> Model
 update = \model, event ->
@@ -87,6 +104,11 @@ moveBall : Model -> Model
 moveBall = \model ->
     ballX = model.ballX |> Quantity.plus model.dBallX
     ballY = model.ballY |> Quantity.plus model.dBallY
+    
+    ballTravelDistance : Vector3d F32 Pixels ScreenSpace
+    ballTravelDistance = model.ballVelocity |> Vector3d.for (ticks 1)
+    
+    ballPosition =  model.ballPosition |> Point3d.translateBy ballTravelDistance
 
     paddleTop = model.height |> Quantity.minus blockHeight |> Quantity.minus (paddleHeight |> Quantity.scaleBy 2)
     paddleLeft = model.paddleX

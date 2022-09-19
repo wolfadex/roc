@@ -1,5 +1,5 @@
 interface Vector3d
-    exposes [Vector3d, toXyz, withLength, per, for]
+    exposes [Vector3d, toXyz, withLength, per, for, reverse]
     imports [pf.Quantity.{Quantity, Rate}, pf.Pixels.{Pixels}, pf.Direction3d.{Direction3d}]
 
 
@@ -45,4 +45,14 @@ for = \@Vector3d v, qty ->
             x: v.x * a,
             y: v.y * a,
             z: v.z * a,
+        }
+
+
+reverse : Vector3d a units coordinates -> Vector3d a units coordinates
+reverse = \@Vector3d v ->
+    @Vector3d
+        {
+            x: -v.x,
+            y: -v.y,
+            z: -v.z,
         }

@@ -1,5 +1,14 @@
 interface Point3d
-    exposes [Point3d, pixels, toPixels, xyz, translateBy]
+    exposes [
+        Point3d,
+        pixels,
+        toPixels,
+        xyz,
+        translateBy,
+        xCoordinate,
+        yCoordinate,
+        zCoordinate,
+    ]
     imports [pf.Quantity.{Quantity}, pf.Pixels.{Pixels}, pf.Vector3d.{Vector3d}]
 
 
@@ -40,3 +49,15 @@ translateBy = \@Point3d p, vec ->
             y: p.y + vecRec.y,
             z: p.z + vecRec.z,
         }
+
+
+xCoordinate : Point3d a unites coordinates -> Quantity a units
+xCoordinate = \@Point3d { x } -> Quantity.toQty x
+
+
+yCoordinate : Point3d a unites coordinates -> Quantity a units
+yCoordinate = \@Point3d { y } -> Quantity.toQty y
+
+
+zCoordinate : Point3d a unites coordinates -> Quantity a units
+zCoordinate = \@Point3d { z } -> Quantity.toQty z

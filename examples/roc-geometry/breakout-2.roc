@@ -3,11 +3,11 @@ app "breakout"
     imports [
         pf.Game.{ Bounds, Elem, Event },
         pf.Quantity.{Quantity, Rate},
-        pf.Pixels.{Pixels},
-        pf.Angle.{Angle},
-        pf.Point3d.{Point3d},
-        pf.Vector3d.{Vector3d},
-        pf.Direction3d.{Direction3d},
+        # pf.Pixels.{Pixels},
+        # pf.Angle.{Angle},
+        # pf.Point3d.{Point3d},
+        # pf.Vector3d.{Vector3d},
+        # pf.Direction3d.{Direction3d},
     ]
     provides [program] { Model } to pf
 
@@ -33,40 +33,22 @@ Model : {
     width : Quantity F32 Pixels,
     # Paddle X-coordinate
     paddleX : Quantity F32 Pixels,
-    # Ball coordinates
-    ballX : Quantity F32 Pixels,
-    ballY : Quantity F32 Pixels,
     ballPosition : Point3d F32 Pixels ScreenSpace,
-    dBallX : Quantity F32 Pixels,
-    # delta x - how much it moves per tick
-    dBallY : Quantity F32 Pixels,
-    # delta y - how much it moves per tick
     ballVelocity : Vector3d F32 PixelsPerTick ScreenSpace,
 }
 
 init : Bounds -> Model
 init = \{ width, height  } ->
-    # ballPosition = Point3d.pixels
-    #                     (width |> Quantity.scaleBy 0.5 |> Pixels.inPixels)
-    #                     (height |> Quantity.scaleBy 0.4 |> Pixels.inPixels)
-    #                     0
     {
         # Screen height and width
         width,
         height,
         # Paddle X-coordinate
         paddleX: width |> Quantity.scaleBy 0.5 |> Quantity.minus (width |> Quantity.scaleBy 0.5 |> Quantity.scaleBy paddleWidth),
-        # Ball coordinates
-        ballX: width |> Quantity.scaleBy 0.5,
-        ballY: height |> Quantity.scaleBy 0.4,
         ballPosition: Point3d.pixels # 5.0f32 10.0f32 0.0f32,
                         (width |> Quantity.scaleBy 0.5)
                         (height |> Quantity.scaleBy 0.4)
                         (Pixels.pixels 0),
-        # Delta - how much ball moves in each tick
-        dBallX: Pixels.pixels 4,
-        dBallY: Pixels.pixels 4,
-        # ballVelocity: Pixels.pixels 4 |> Quantity.per (ticks 1)
         ballVelocity: Direction3d.xy (Angle.degrees 45)
                         |> Vector3d.withLength (Pixels.pixels 4)
                         |> Vector3d.per (ticks 1)
@@ -102,34 +84,31 @@ tick = \model ->
 
 moveBall : Model -> Model
 moveBall = \model ->
-    ballX = model.ballX |> Quantity.plus model.dBallX
-    ballY = model.ballY |> Quantity.plus model.dBallY
-    
-    ballTravelDistance : Vector3d F32 Pixels ScreenSpace
+    # ballTravelDistance : Vector3d F32 Pixels ScreenSpace
     ballTravelDistance = model.ballVelocity |> Vector3d.for (ticks 1)
-    
+    # ballPosition : Point3d F32 Pixels
     ballPosition =  model.ballPosition |> Point3d.translateBy ballTravelDistance
 
     paddleTop = model.height |> Quantity.minus blockHeight |> Quantity.minus (paddleHeight |> Quantity.scaleBy 2)
     paddleLeft = model.paddleX
     paddleRight = paddleLeft |> Quantity.plus (model.width |> Quantity.scaleBy paddleWidth)
+    
+    ballPositionPixels = Point3d.inPixels ballPosition
 
     # If its y used to be less than the paddle, and now it's greater than or equal,
     # then this is the frame where the ball collided with it.
-    crossingPaddle = (model.ballY |> Quantity.lessThan paddleTop) && (ballY |> Quantity.greaterThanEqual paddleTop)
+    crossingPaddle = ((Point3d.inPixels model.ballPosition).y |> Quantity.lessThan paddleTop) && (ballPositionPixels.y |> Quantity.greaterThanEqual paddleTop)
 
     # If it collided with the paddle, bounce off.
-    directionChange =
-        # if crossingPaddle && (ballX >= paddleLeft && ballX <= paddleRight) then
-        if crossingPaddle && ((ballX |> Quantity.greaterThanEqual paddleLeft) && (ballX |> Quantity.lessThanEqual paddleRight)) then
-            -1f32
+    ballVelocity =
+        if crossingPaddle && ((ballPositionPixels.x |> Quantity.greaterThanEqual paddleLeft) && (ballPositionPixels.x |> Quantity.lessThanEqual paddleRight)) then
+            Vector3d.reverse model.ballVelocity
         else
-            1f32
+            model.ballVelocity
 
-    dBallX = model.dBallX |> Quantity.scaleBy directionChange
-    dBallY = model.dBallY |> Quantity.scaleBy directionChange
+    ballVelocity = Vector3.reverse model.ballVelocity
 
-    { model & ballX, ballY, dBallX, dBallY }
+    { model & ballPosition, ballVelocity }
 
 render : Model -> List Elem
 render = \model ->
@@ -189,8 +168,8 @@ render = \model ->
         color = { r: 0.7, g: 0.3, b: 0.9, a: 1.0 }
         width = ballSize
         height = ballSize
-        left = model.ballX
-        top = model.ballY
+        left = Point3d.xCoordinate model.ballPosition
+        top = Point3d.yCoordinate model.ballPosition
 
         Rect { left, top, width, height, color }
 

@@ -1,6 +1,6 @@
 interface Vector3d
     exposes [Vector3d, toXyz, withLength, per, for, reverse]
-    imports [pf.Quantity.{Quantity, Rate}, pf.Pixels.{Pixels}, pf.Direction3d.{Direction3d}]
+    imports [pf.Quantity.{Quantity, Rate}, pf.Direction3d.{Direction3d}]
 
 
 Vector3d a units coordinates := { x : Frac a, y : Frac a, z : Frac a }

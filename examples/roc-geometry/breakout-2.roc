@@ -1,13 +1,13 @@
 app "breakout"
     packages { pf: "platform/main.roc" }
     imports [
-        pf.Game.{ Bounds, Elem, Event },
-        pf.Quantity.{Quantity, Rate},
-        # pf.Pixels.{Pixels},
-        # pf.Angle.{Angle},
-        # pf.Point3d.{Point3d},
-        # pf.Vector3d.{Vector3d},
-        # pf.Direction3d.{Direction3d},
+        pf.Game.{ Bounds, Elem, Event, Rgba },
+        pf.Quantity.{ Quantity, Rate },
+        pf.Pixels.{ Pixels },
+        pf.Angle.{ Angle },
+        pf.Point3d.{ Point3d },
+        pf.Vector3d.{ Vector3d },
+        pf.Direction3d.{ Direction3d },
     ]
     provides [program] { Model } to pf
 
@@ -25,7 +25,7 @@ ScreenSpace : [ScreenSpace]
 
 Tick : [Tick]
 
-PixelsPerTick := Rate Pixels Tick
+PixelsPerTick : Rate Pixels Tick
 
 Model : {
     # Screen height and width
@@ -57,7 +57,6 @@ init = \{ width, height  } ->
 ticks : Frac a -> Quantity a Tick
 ticks = \n -> Quantity.toQty n
 
-carl : Quantity F32 PixelsPerTick
 
 update : Model, Event -> Model
 update = \model, event ->
@@ -93,11 +92,11 @@ moveBall = \model ->
     paddleLeft = model.paddleX
     paddleRight = paddleLeft |> Quantity.plus (model.width |> Quantity.scaleBy paddleWidth)
     
-    ballPositionPixels = Point3d.inPixels ballPosition
+    ballPositionPixels = Point3d.toPixels ballPosition
 
     # If its y used to be less than the paddle, and now it's greater than or equal,
     # then this is the frame where the ball collided with it.
-    crossingPaddle = ((Point3d.inPixels model.ballPosition).y |> Quantity.lessThan paddleTop) && (ballPositionPixels.y |> Quantity.greaterThanEqual paddleTop)
+    crossingPaddle = ((Point3d.toPixels model.ballPosition).y |> Quantity.lessThan paddleTop) && (ballPositionPixels.y |> Quantity.greaterThanEqual paddleTop)
 
     # If it collided with the paddle, bounce off.
     ballVelocity =
@@ -105,8 +104,6 @@ moveBall = \model ->
             Vector3d.reverse model.ballVelocity
         else
             model.ballVelocity
-
-    ballVelocity = Vector3.reverse model.ballVelocity
 
     { model & ballPosition, ballVelocity }
 
@@ -118,12 +115,12 @@ render = \model ->
         \index ->
             col =
                 Num.rem index numCols
-                |> Num.toF32
+                |> Num.toFrac
 
             row =
                 index
                 // numCols
-                |> Num.toF32
+                |> Num.toFrac
 
             red = col / Num.toF32 numCols
             green = row / Num.toF32 numRows

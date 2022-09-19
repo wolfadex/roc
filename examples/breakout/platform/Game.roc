@@ -1,5 +1,5 @@
 interface Game
-    exposes [Bounds, Elem, Event]
+    exposes [Bounds, Elem, Event, Rgba]
     imports []
 
 Rgba : { r : F32, g : F32, b : F32, a : F32 }

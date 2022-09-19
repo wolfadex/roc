@@ -1,6 +1,6 @@
 interface Direction3d
     exposes [Direction3d, xy, toRecord]
-    imports [pf.Quantity.{Quantity}, pf.Angle.{Angle}]
+    imports [pf.Angle.{ Angle }]
 
 
 Direction3d a coordinates := { x : Frac a, y : Frac a, z : Frac a }

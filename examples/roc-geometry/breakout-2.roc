@@ -8,6 +8,7 @@ app "breakout"
         pf.Point3d.{ Point3d },
         pf.Vector3d.{ Vector3d },
         pf.Direction3d.{ Direction3d },
+        pf.Plane3d.{ Plane3d },
     ]
     provides [program] { Model } to pf
 
@@ -85,7 +86,8 @@ moveBall : Model -> Model
 moveBall = \model ->
     # ballTravelDistance : Vector3d F32 Pixels ScreenSpace
     ballTravelDistance = model.ballVelocity |> Vector3d.for (ticks 1)
-    # ballPosition : Point3d F32 Pixels
+    
+    ballPosition : Point3d F32 Pixels ScreenSpace
     ballPosition =  model.ballPosition |> Point3d.translateBy ballTravelDistance
 
     paddleTop = model.height |> Quantity.minus blockHeight |> Quantity.minus (paddleHeight |> Quantity.scaleBy 2)
@@ -94,14 +96,28 @@ moveBall = \model ->
     
     ballPositionPixels = Point3d.toPixels ballPosition
 
+    ballPreviousPositionPixels = Point3d.toPixels model.ballPosition
+
     # If its y used to be less than the paddle, and now it's greater than or equal,
     # then this is the frame where the ball collided with it.
-    crossingPaddle = ((Point3d.toPixels model.ballPosition).y |> Quantity.lessThan paddleTop) && (ballPositionPixels.y |> Quantity.greaterThanEqual paddleTop)
+    crossingPaddle = (ballPreviousPositionPixels.y |> Quantity.lessThan paddleTop) && (ballPositionPixels.y |> Quantity.greaterThanEqual paddleTop) && ((ballPositionPixels.x |> Quantity.greaterThanEqual paddleLeft) && (ballPositionPixels.x |> Quantity.lessThanEqual paddleRight))
+
+    crossingTop = (ballPreviousPositionPixels.y |> Quantity.greaterThan (Pixels.pixels 0)) && (ballPositionPixels.y |> Quantity.lessThanEqual (Pixels.pixels 0))
+
+    crossingRightSide = (ballPreviousPositionPixels.x |> Quantity.plus ballSize |> Quantity.lessThan model.width) && (ballPositionPixels.x |> Quantity.plus ballSize |> Quantity.greaterThanEqual model.width)
+
+    crossingLeftSide = (ballPreviousPositionPixels.x |> Quantity.greaterThan (Pixels.pixels 0)) && (ballPositionPixels.x |> Quantity.lessThanEqual (Pixels.pixels 0))
 
     # If it collided with the paddle, bounce off.
     ballVelocity =
-        if crossingPaddle && ((ballPositionPixels.x |> Quantity.greaterThanEqual paddleLeft) && (ballPositionPixels.x |> Quantity.lessThanEqual paddleRight)) then
-            Vector3d.reverse model.ballVelocity
+        if crossingPaddle || crossingTop then
+            (model.ballVelocity |> Vector3d.for (ticks 1))
+                |> Vector3d.mirrorAcross (Plane3d.through Direction3d.negativeY ballPosition)
+                |> Vector3d.per (ticks 1)
+        else if crossingRightSide || crossingLeftSide then
+            (model.ballVelocity |> Vector3d.for (ticks 1))
+                |> Vector3d.mirrorAcross (Plane3d.through Direction3d.negativeX ballPosition)
+                |> Vector3d.per (ticks 1)
         else
             model.ballVelocity
 

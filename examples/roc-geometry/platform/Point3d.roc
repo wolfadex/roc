@@ -9,15 +9,20 @@ interface Point3d
         yCoordinate,
         zCoordinate,
     ]
-    imports [pf.Quantity.{Quantity}, pf.Pixels.{Pixels}, pf.Vector3d.{Vector3d}]
+    imports [
+        pf.Quantity.{ Quantity },
+        pf.Pixels.{ Pixels },
+        pf.Vector3d.{ Vector3d },
+        pf.Types,
+    ]
 
 
-Point3d a units coordinates := { x : Frac a, y : Frac a, z : Frac a }
+Point3d a units coordinates : Types.Point3d a units coordinates
 
 
 xyz : Quantity a units, Quantity a units, Quantity a units -> Point3d a units coordinates
 xyz = \x, y, z ->
-    @Point3d
+    Types.toPoint3d
         {
             x: Quantity.fromQty x,
             y: Quantity.fromQty y,
@@ -31,7 +36,8 @@ pixels = xyz
 
 
 toPixels : Point3d a Pixels coordinates -> { x : Quantity a Pixels, y : Quantity a Pixels, z : Quantity a Pixels }
-toPixels = \@Point3d p ->
+toPixels = \pnt ->
+    p = Types.fromPoint3d pnt
     {
         x: Quantity.toQty p.x,
         y: Quantity.toQty p.y,
@@ -40,10 +46,11 @@ toPixels = \@Point3d p ->
 
 
 translateBy : Point3d a units coordinates, Vector3d a units coordinates -> Point3d a units coordinates
-translateBy = \@Point3d p, vec ->
+translateBy = \pnt, vec ->
+    p = Types.fromPoint3d pnt
     vecRec = Vector3d.toXyz vec
     
-    @Point3d
+    Types.toPoint3d
         {
             x: p.x + vecRec.x,
             y: p.y + vecRec.y,
@@ -52,12 +59,21 @@ translateBy = \@Point3d p, vec ->
 
 
 xCoordinate : Point3d a unites coordinates -> Quantity a units
-xCoordinate = \@Point3d { x } -> Quantity.toQty x
+xCoordinate = \pnt ->
+    { x } = Types.fromPoint3d pnt
+    
+    Quantity.toQty x
 
 
 yCoordinate : Point3d a unites coordinates -> Quantity a units
-yCoordinate = \@Point3d { y } -> Quantity.toQty y
+yCoordinate = \pnt ->
+    { y } = Types.fromPoint3d pnt
+    
+    Quantity.toQty y
 
 
 zCoordinate : Point3d a unites coordinates -> Quantity a units
-zCoordinate = \@Point3d { z } -> Quantity.toQty z
+zCoordinate = \pnt ->
+    { z } = Types.fromPoint3d pnt
+    
+    Quantity.toQty z
